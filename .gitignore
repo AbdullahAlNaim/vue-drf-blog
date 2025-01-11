@@ -1,0 +1,9 @@
+backend/venv
+backend/core/core/__pycache__
+backend/core/core/migrations
+backend/core/core/settings.py
+backend/core/db.sqlite3
+backend/core/blog/__pycache__
+backend/core/blog/migrations
+
+frontend/Blog/.vscode/extensions.json
