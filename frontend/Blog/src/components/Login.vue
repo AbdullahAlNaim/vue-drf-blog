@@ -1,5 +1,7 @@
 <script>
+import axios from 'axios';
 export default {
+    
     data () {
         return {
             loginData: {
@@ -10,14 +12,16 @@ export default {
         }
     },
     created() {
-        this.fetchCsrfToken();
+        this.getCsrfToken();
     },
     methods: {
-        async fetchCsrfToken() {
+        async getCsrfToken () {
             try {
-                const response = await fetch('http://localhost:8000/api/get-csrf-token');
+                const response = await fetch('http://localhost:8000/get_csrf_token');
                 if (response.ok) {
-                    this.csrfToken = await response.text();
+                    const data = await response.json()
+                    this.csrfToken = data.csrf_token;
+                    console.log('Fetched CSRF token: ', this.csrfToken)
                 } else {
                     console.error('Failed to fetch CSRF token');
                 }
@@ -26,28 +30,34 @@ export default {
             }
         },
         async login() {
-            try {
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-                    const response = await fetch('http://localhost:8000/loginlogin/?next=/blog', {
+            try { 
+                    console.log(this.csrfToken)
+                    const response = await fetch('http://localhost:8000/loginlogin/?next=/blog/', {
                     method: 'POST',
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken,
+                        'X-CSRFToken': this.csrfToken, 
                     },
-                    body: JSON.stringify(this.loginData)
+                    body: JSON.stringify({
+                        username: this.loginData.username,
+                        password: this.loginData.password,
+                    })
                 });
                 
                 if(!response.ok) {
                     throw new Error(`HTTP error! status ${response.status}`)
                 }
 
+                const data = await response.json();
+                // localStorage.setItem('access_token', data.access); // Store access token                
+
                 this.$router.push('/blogs')
 
             } catch (error) {
                 console.error('Error found: ', error);
             }
-       }
+       },
     }
 }
 </script>
