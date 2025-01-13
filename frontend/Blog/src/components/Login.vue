@@ -1,5 +1,4 @@
 <script>
-import axios from 'axios';
 export default {
     
     data () {
@@ -8,36 +7,36 @@ export default {
                 username: '',
                 password: '',
             },
-            csrfToken: '',
+            // csrfToken: '',
         }
     },
     created() {
-        this.getCsrfToken();
+        // this.getCsrfToken();
     },
     methods: {
-        async getCsrfToken () {
-            try {
-                const response = await fetch('http://localhost:8000/get_csrf_token');
-                if (response.ok) {
-                    const data = await response.json()
-                    this.csrfToken = data.csrf_token;
-                    console.log('Fetched CSRF token: ', this.csrfToken)
-                } else {
-                    console.error('Failed to fetch CSRF token');
-                }
-            } catch (error) {
-                console.error('Error fetching CSRF token: ', error);
-            }
-        },
+        // async getCsrfToken () {
+        //     try {
+        //         const response = await fetch('http://localhost:8000/csrf-token');
+        //         if (response.ok) {
+        //             const data = await response.json()
+        //             this.csrfToken = data.csrf_token;
+        //             console.log('Fetched CSRF token: ', this.csrfToken)
+        //         } else {
+        //             console.error('Failed to fetch CSRF token');
+        //         }
+        //     } catch (error) {
+        //         console.error('Error fetching CSRF token: ', error);
+        //     }
+        // },
         async login() {
             try { 
                     console.log(this.csrfToken)
-                    const response = await fetch('http://localhost:8000/loginlogin/?next=/blog/', {
+                    const response = await fetch('http://localhost:8000/api/login/', {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': this.csrfToken, 
+                        'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)[1],
                     },
                     body: JSON.stringify({
                         username: this.loginData.username,
@@ -49,8 +48,7 @@ export default {
                     throw new Error(`HTTP error! status ${response.status}`)
                 }
 
-                const data = await response.json();
-                // localStorage.setItem('access_token', data.access); // Store access token                
+                const data = await response.json();           
 
                 this.$router.push('/blogs')
 
