@@ -1,4 +1,11 @@
 <script>
+export default {
+  data () {
+    return {
+      userAuthenticated: false,
+    }
+  }
+}
 </script>
 
 <template>

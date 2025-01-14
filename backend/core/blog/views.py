@@ -2,17 +2,20 @@ from rest_framework import viewsets, mixins, permissions
 from .models import Blog
 from .permissions import IsOwnerReadOnly
 from django.contrib.auth import authenticate, login
+from django.contrib.auth import logout
 from django.contrib.auth.models import User
-from .serializers import BlogSerializer, UserSerializer
+from django.views.decorators.csrf import get_token
 from django.http import HttpResponse
+from .serializers import BlogSerializer, UserSerializer
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.views.decorators.csrf import get_token
 from rest_framework.decorators import api_view
 from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+
 # from django.contrib.auth import authenticate
 # from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -35,6 +38,10 @@ class LoginAPIView(APIView):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)  # Log in the user
+            try:
+                print('login success')
+            except:
+                print('login failed')
             return Response(
                 {"message": "Login successful"},
                 status=status.HTTP_200_OK,
@@ -44,6 +51,19 @@ class LoginAPIView(APIView):
                 {"error": "Invalid username or password."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
+
+
+class LogoutAPIView(APIView):
+    def post(self, request, *args,**kwargs):
+        try:
+            logout(request)
+            print('server logged out successfully')
+        except:
+            print('something went wrong')
+        return Response(
+            {"message": "Logout successful"},
+            status=status.HTTP_200_OK
+        )
 
 # class CustomLoginView(APIView):
 #     def post(self, request):
@@ -91,22 +111,22 @@ class GetCSRFTokenView(APIView):
 class BlogViewSet(viewsets.ModelViewSet):
     queryset = Blog.objects.all()
     serializer_class = BlogSerializer
-    permission_class = [permissions.IsAuthenticatedOrReadOnly,
-    IsOwnerReadOnly]
+    permission_classes = [IsAuthenticated,]
 
-    def get_query(self):
-        query_set  = super().get_query()
+    def get_queryset(self):
+        query_set  = super().get_queryset()
 
         user = self.request.user
         if user.is_authenticated:
-            query_set = query_set.filter(author=user)
+            return super().get_queryset().filter(author=user)
 
-        return query_set
+        return super().get_queryset().none()
+
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-        user = serializer.instance
+        user = serializer.instance.author
         if not Token.objects.filter(user=user).exists():
             Token.objects.create(user=user)
 

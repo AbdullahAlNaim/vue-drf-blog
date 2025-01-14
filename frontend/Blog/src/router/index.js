@@ -3,6 +3,7 @@ import LoginView from '../views/LoginView.vue'
 import HomeView from '../views/HomeView.vue'
 import AboutView from '../views/AboutView.vue'
 import BlogView from '../views/BlogView.vue'
+import PostView from '../views/PostView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,6 +31,16 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginView
+    },
+    {
+      path: '/logout',
+      name: 'logout',
+      component: LoginView
+    },
+    {
+      path: '/blog/:id',
+      name: 'Post',
+      component: PostView,
     }
   ],
 })

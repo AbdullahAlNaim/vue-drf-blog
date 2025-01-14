@@ -1,17 +1,36 @@
+<template>
+    <form @submit.prevent="userStore.login()">
+        <input type="username"
+        v-model="userStore.username"
+        placeholder="username">
+        <br>
+        <input type="password"
+        v-model="userStore.password"
+        placeholder="password">
+        <br>
+        <button type="submit">Login</button>
+    </form>
+</template>
+
 <script>
+import { useUserStore } from '@/stores/UserStore';
 export default {
-    
+    setup () {
+        const userStore = useUserStore();
+        return { userStore }
+    },
     data () {
         return {
             loginData: {
                 username: '',
                 password: '',
             },
+            userAuthenticated: false,
             // csrfToken: '',
         }
     },
     created() {
-        // this.getCsrfToken();
+        this.userStore.getCsrfToken();
     },
     methods: {
         // async getCsrfToken () {
@@ -45,12 +64,14 @@ export default {
                 });
                 
                 if(!response.ok) {
-                    throw new Error(`HTTP error! status ${response.status}`)
+                    throw new Error(`HTTP error! status ${response.status}`);
                 }
 
-                const data = await response.json();           
+                this.userAuthenticated = true;
 
-                this.$router.push('/blogs')
+                // const data = await response.json();           
+
+                this.$router.push('/blogs');
 
             } catch (error) {
                 console.error('Error found: ', error);
@@ -59,17 +80,3 @@ export default {
     }
 }
 </script>
-
-<template>
-    <form @submit.prevent="login">
-        <input type="username"
-        v-model="loginData.username"
-        placeholder="username">
-        <br>
-        <input type="password"
-        v-model="loginData.password"
-        placeholder="password">
-        <br>
-        <button type="submit">Login</button>
-    </form>
-</template>
