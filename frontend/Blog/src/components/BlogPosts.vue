@@ -1,7 +1,7 @@
 <template>
 <h1>Posts</h1>
 <div v-if="userStore.userCheck">
-    <div v-for="blogpost in posted">
+    <div v-for="blogpost in userStore.posted" :key="blogpost.id">
         <div class="blog-post" >
             <!-- @click="singlePost(blogpost.id)" -->
             id: {{ blogpost.id }} <br>
@@ -36,24 +36,24 @@ export default {
         }
     },
     methods: {
-        async blogPosts() {
-            try {
-                const response = await fetch('http://localhost:8000/blog/', {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': this.userStore.csrfToken,
-                        // 'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)[1],
-                    }
-                });
-                console.log(this.userStore.csrfToken)
-                const data = await response.json();
-                this.posted = data;
-            } catch (error) {
-                console.error('Error found: ', error);
-            }
-        },
+        // async blogPosts() {
+        //     try {
+        //         const response = await fetch('http://localhost:8000/blog/', {
+        //             method: 'GET',
+        //             credentials: 'include',
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //                 'X-CSRFToken': this.userStore.csrfToken,
+        //                 // 'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)[1],
+        //             }
+        //         });
+        //         console.log(this.userStore.csrfToken)
+        //         const data = await response.json();
+        //         this.posted = data;
+        //     } catch (error) {
+        //         console.error('Error found: ', error);
+        //     }
+        // },
         async singlePost (id) {
             try {
                 const response = await fetch('http://localhost:8000/blog/' + id, {
@@ -80,13 +80,18 @@ export default {
     },
     emits: ['viewSinglePost'],
     mounted () {
-        this.blogPosts();
+        this.userStore.blogPosts();
         this.userStore.getCsrfToken();
     }
 }
 </script>
 
 <style scoped>
+.blog-post {
+    padding: 10px;
+    border-radius: 5px;
+}
+
 .blog-post:hover {
     background-color: antiquewhite;
 }

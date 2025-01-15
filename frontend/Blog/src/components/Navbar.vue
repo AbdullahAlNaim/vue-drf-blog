@@ -14,6 +14,9 @@ export default {
         <RouterLink class="nav-options" to="/">Home</RouterLink>
         <RouterLink class="nav-options" to="/about">About</RouterLink>
         <RouterLink class="nav-options" to="/blogs">Blogs</RouterLink>
+        <span v-if="userStore.userCheck">
+            <RouterLink class="nav-options" to="/new">New Post</RouterLink>
+        </span>
         <span v-if="!userStore.userCheck">
             <RouterLink class="nav-options" to="/login">Login</RouterLink>
         </span>

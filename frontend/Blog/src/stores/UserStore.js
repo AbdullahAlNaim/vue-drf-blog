@@ -8,7 +8,9 @@ export const useUserStore = defineStore('userStore', {
         password: '',
         userLoggedIn: false,
         csrfToken: '',
-        // posts: [],
+        posted: [],
+        title: '',
+        body: '',
     }),
     getters: {
         userCheck () {
@@ -36,8 +38,8 @@ export const useUserStore = defineStore('userStore', {
         },
         async login() {
             try { 
-                    console.log(this.csrfToken)
-                    const response = await fetch('http://localhost:8000/api/login/', {
+                console.log(this.csrfToken)
+                const response = await fetch('http://localhost:8000/api/login/', {
                     method: 'POST',
                     credentials: 'include',
                     headers: {
@@ -54,7 +56,6 @@ export const useUserStore = defineStore('userStore', {
                 if(!response.ok) {
                     throw new Error(`HTTP error! status ${response.status}`);
                 }
-
                 
                 this.userLoggedIn = true;
 
@@ -82,31 +83,85 @@ export const useUserStore = defineStore('userStore', {
             console.error('Error found: ', error);
         }
        },
+       async createPost () {
+        try {
+            const response = await fetch('http://localhost:8000/blog/', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)[1],
+                },
+                body: JSON.stringify({
+                    title: this.title,
+                    body: this.body
+                })
+            })
+
+            this.title = '';
+            this.body = '';
+            router.replace('/blogs');
+
+
+        } catch (error) {
+            console.error('Error found creating post: ', error)
+        }
+       },
        async deletePost (id) {
-        try {   
-            const url = 'http://localhost:8000/blog/' + id + '/'
-            console.log(url);
+
+        console.log('deletePost called');
+        const url = `http://localhost:8000/blog/${id}/`;
+        // console.log('URL constructed:', url);
+
+        try { 
             const response = await fetch(url, {
                 method: 'DELETE',
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': this.csrfToken,
-                    // 'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)[1],
-                }
-            })
+                    // 'X-CSRFToken': this.csrfToken,
+                    'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)[1],
+                },
+            });
 
-            if (response.ok) {
-                console.log('deleted post: ', id);
-            } else {
-                
-                console.error(`failed to delete post. status ${response.status}`)
-                
+            if(!response.ok) {
+                throw new Error(`HTTP error! status ${response.status}`);
             }
 
-        } catch (error) {
-            console.error('Error found: ', error);
+            console.log('deleted task: ', id)
+
+            this.blogPosts();
+
+            this.posted = this.posted.filter(post => post.id !== id);
+
+            } catch (error) {
+                console.error('Error found: ', error);
+            }
+        },
+        async blogPosts() {
+            try {
+                const response = await fetch('http://localhost:8000/blog/', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // 'X-CSRFToken': this.userStore.csrfToken,
+                        'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)[1],
+                    }
+                });
+                console.log(this.csrfToken)
+                const data = await response.json();
+                this.posted = data;
+            } catch (error) {
+                console.error('Error found: ', error);
+            }
+        },
+        async singlePost () {
+            try {
+                
+            } catch (error) {
+                console.error('Error found single post: ', error)
+            }
         }
-       }
     }
 })
