@@ -6,11 +6,16 @@ export const useUserStore = defineStore('userStore', {
         userToken: '',
         username: '',
         password: '',
+        registerEmail: '',
+        registerUsername: '',
+        registerPassword: '',
         userLoggedIn: false,
         csrfToken: '',
         posted: [],
         title: '',
         body: '',
+        singleViewData: {},
+        authToken: '',
     }),
     getters: {
         userCheck () {
@@ -28,7 +33,7 @@ export const useUserStore = defineStore('userStore', {
                     const data = await response.json();
                     this.csrfToken = data.csrf_token;
                     localStorage.setItem('csrfToken', this.csrfToken);
-                    console.log('Fetched CSRF token: ', this.csrfToken);
+                    // console.log('Fetched CSRF token: ', this.csrfToken);
                 } else {
                     console.error('Failed to fetch CSRF token');
                 }
@@ -36,9 +41,45 @@ export const useUserStore = defineStore('userStore', {
                 console.error('Error fetching CSRF token: ', error);
             }
         },
+        async signUp() {
+            try {
+                const response = await fetch('http://localhost:8000/user/', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)[1],
+                        // 'X-CSRFToken': this.csrfToken,
+                    },
+                    body: JSON.stringify({
+                        email: this.registerEmail,
+                        username: this.registerUsername,
+                        password: this.registerPassword,
+                    })
+                })
+
+                if (!response.ok) {
+                    console.log('Error found register response: ', response.status);
+                }
+
+                this.userLoggedIn = true;
+                this.username = this.registerUsername;
+                this.password = this.registerPassword;
+
+                this.login();
+
+                this.password = '';
+                this.registerEmail = '';
+                this.registerUsername = '';
+                this.registerPassword = '';
+
+            } catch (error) {
+                console.error('Error found sign up :', error)
+            }
+        },
         async login() {
             try { 
-                console.log(this.csrfToken)
+                // console.log(this.csrfToken)
                 const response = await fetch('http://localhost:8000/api/login/', {
                     method: 'POST',
                     credentials: 'include',
@@ -51,17 +92,19 @@ export const useUserStore = defineStore('userStore', {
                         username: this.username,
                         password: this.password,
                     })
-                });
+
+                })
                 
-                if(!response.ok) {
+                if (!response.ok) {
                     throw new Error(`HTTP error! status ${response.status}`);
                 }
+
+                const responseData = await response.json();
+                this.authToken = responseData.token;
+                this.userLoggedIn = true;  
+                console.log(this.authToken);
+                router.replace('/blogs')
                 
-                this.userLoggedIn = true;
-
-                // const data = await response.json();           
-
-                router.push('/blogs');
 
             } catch (error) {
                 console.error('Error found: ', error);
@@ -75,6 +118,7 @@ export const useUserStore = defineStore('userStore', {
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)[1],
+                    'Authorization': `Token ${this.authToken}`
                 },
             })
             this.userLoggedIn = false;
@@ -83,6 +127,31 @@ export const useUserStore = defineStore('userStore', {
             console.error('Error found: ', error);
         }
        },
+        async blogPosts() {
+            try {
+                // const token = document.cookie.match(/access_token=([^;]+)/)[1];
+                const response = await fetch('http://localhost:8000/blog/', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)[1],
+                        'Authorization': `Token ${this.authToken}`
+                    }
+                });
+                // console.log(this.csrfToken)
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`)
+                }
+
+                const data = await response.json();
+                this.posted = data;
+
+            } catch (error) {
+                console.error('Error found: ', error);
+            }
+        },
        async createPost () {
         try {
             const response = await fetch('http://localhost:8000/blog/', {
@@ -91,6 +160,7 @@ export const useUserStore = defineStore('userStore', {
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)[1],
+                    'Authorization': `Token ${this.authToken}`
                 },
                 body: JSON.stringify({
                     title: this.title,
@@ -109,7 +179,7 @@ export const useUserStore = defineStore('userStore', {
        },
        async deletePost (id) {
 
-        console.log('deletePost called');
+        // console.log('deletePost called');
         const url = `http://localhost:8000/blog/${id}/`;
         // console.log('URL constructed:', url);
 
@@ -119,8 +189,8 @@ export const useUserStore = defineStore('userStore', {
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
-                    // 'X-CSRFToken': this.csrfToken,
                     'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)[1],
+                    'Authorization': `Token ${this.authToken}`
                 },
             });
 
@@ -128,7 +198,7 @@ export const useUserStore = defineStore('userStore', {
                 throw new Error(`HTTP error! status ${response.status}`);
             }
 
-            console.log('deleted task: ', id)
+            // console.log('deleted task: ', id)
 
             this.blogPosts();
 
@@ -138,27 +208,48 @@ export const useUserStore = defineStore('userStore', {
                 console.error('Error found: ', error);
             }
         },
-        async blogPosts() {
+        async singlePost (id) {
+            this.singleViewData = {}
+            const url = `http://localhost:8000/blog/${id}/`
             try {
-                const response = await fetch('http://localhost:8000/blog/', {
+                const response = await fetch(url, {
                     method: 'GET',
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        // 'X-CSRFToken': this.userStore.csrfToken,
                         'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)[1],
+                        'Authorization': `Token ${this.authToken}`
                     }
-                });
-                console.log(this.csrfToken)
-                const data = await response.json();
-                this.posted = data;
+                })
+                .then(response => response.json())
+                .then(response => this.singleViewData = response)
             } catch (error) {
-                console.error('Error found: ', error);
+                console.error('Error found single post: ', error)
             }
         },
-        async singlePost () {
+        async updatePost (id) {
+            const url = `http://localhost:8000/blog/${id}/`
             try {
+                const response = await fetch(url, {
+                    method: 'PATCH',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)[1],
+                        'Authorization': `Token ${this.authToken}`
+                    },
+                    body: JSON.stringify({
+                        title: this.singleViewData.title,
+                        body: this.singleViewData.body
+                    })
+                })
                 
+                if (!response.ok) {
+                    console.log('Error found updating: ', response.status);
+                }
+
+                router.replace('/blogs')
+
             } catch (error) {
                 console.error('Error found single post: ', error)
             }

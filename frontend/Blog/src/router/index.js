@@ -5,6 +5,7 @@ import AboutView from '../views/AboutView.vue'
 import BlogView from '../views/BlogView.vue'
 import PostView from '../views/PostView.vue'
 import NewPostView from '@/views/NewPostView.vue'
+import RegisterView from '@/views/RegisterView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -47,6 +48,11 @@ const router = createRouter({
       path: '/new',
       name: 'NewPost',
       component: NewPostView,
+    },
+    {
+      path: '/register',
+      name: 'Register',
+      component: RegisterView
     }
   ],
 })

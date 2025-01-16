@@ -18,6 +18,7 @@ export default {
             <RouterLink class="nav-options" to="/new">New Post</RouterLink>
         </span>
         <span v-if="!userStore.userCheck">
+            <RouterLink class="nav-options" to="/register">Sign Up</RouterLink>
             <RouterLink class="nav-options" to="/login">Login</RouterLink>
         </span>
         <span v-else @click="userStore.logout">
